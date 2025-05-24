@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
 async function testImageGeneration() {
@@ -8,6 +9,13 @@ async function testImageGeneration() {
   if (!API_TOKEN) {
     console.error('Error: API_TOKEN no está configurado en .env');
     return;
+  }
+
+  // Crear carpeta images si no existe
+  const imagesDir = path.join(__dirname, 'images');
+  if (!fs.existsSync(imagesDir)) {
+    fs.mkdirSync(imagesDir, { recursive: true });
+    console.log('📁 Carpeta "images" creada');
   }
 
   const requestPayload = {
@@ -37,12 +45,13 @@ async function testImageGeneration() {
     console.log(JSON.stringify(responseData, null, 2));
 
     if (responseData.success && responseData.data.imageBase64) {
-      // Guardar la imagen generada
+      // Guardar la imagen generada en la carpeta images/
       const imageBuffer = Buffer.from(responseData.data.imageBase64, 'base64');
       const filename = `generated_image_${Date.now()}.png`;
-      fs.writeFileSync(filename, imageBuffer);
+      const filepath = path.join(imagesDir, filename);
+      fs.writeFileSync(filepath, imageBuffer);
       
-      console.log(`✅ Imagen generada exitosamente y guardada como: ${filename}`);
+      console.log(`✅ Imagen generada exitosamente y guardada como: images/${filename}`);
       console.log(`📏 Tamaño de imagen: ${Math.round(imageBuffer.length / 1024)} KB`);
       
       if (responseData.data.textContent) {
