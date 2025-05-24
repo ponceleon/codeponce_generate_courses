@@ -1,12 +1,14 @@
 # API Proxy para Generación de Temarios con Gemini
 
-Este servicio actúa como un proxy para la API de Google Gemini, especializado en la generación de temarios de cursos en formato JSON. Proporciona una capa de autenticación y una interfaz simplificada para interactuar con los modelos de Gemini.
+Este servicio actúa como un proxy para la API de Google Gemini, especializado en la generación de temarios de cursos en formato JSON y generación de imágenes. Proporciona una capa de autenticación y una interfaz simplificada para interactuar con los modelos de Gemini.
 
 ## Características Principales
 
 * **Generación de Temarios de Cursos:** Endpoint dedicado para crear esquemas de cursos estructurados en módulos y lecciones.
+* **Generación de Imágenes:** Endpoint especializado para crear imágenes usando modelos de Gemini con guardado automático.
 * **Integración con Google Gemini:** Utiliza el SDK `@google/genai` para comunicarse con los modelos de IA generativa de Google.
 * **Autenticación Segura:** Protege los endpoints mediante un token de API personalizado.
+* **Gestión de Archivos:** Guarda automáticamente las imágenes generadas en una carpeta local `/images/` y las sirve estáticamente.
 * **Información de Uso de Tokens:** Devuelve detalles sobre los tokens consumidos por cada solicitud al modelo Gemini.
 * **Configuración Flexible:** Permite especificar el modelo de Gemini, configuraciones de generación y de seguridad.
 * **Endpoints Auxiliares:** Incluye rutas para listar modelos (simulado) y verificar el estado del servicio.
@@ -45,6 +47,10 @@ Este servicio actúa como un proxy para la API de Google Gemini, especializado e
 
     # Tu token de API personalizado para asegurar este servicio proxy
     API_TOKEN=TU_TOKEN_SECRETO_PARA_ESTE_PROXY
+
+    # URL base del servidor (opcional, por defecto http://localhost:PORT)
+    # Necesario para generar URLs correctas de acceso a imágenes
+    BASE_URL=http://localhost:3000
     ```
 
 ## Ejecutar el Servicio
