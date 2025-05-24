@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "docs:generate": "node -e \"const fs = require('fs'); const spec = require('./swagger.config'); fs.writeFileSync('./docs/api-spec.json', JSON.stringify(spec, null, 2))\"",
+    "docs:serve": "npm start"
   },
   "keywords": [
     "gemini",
@@ -22,7 +24,9 @@
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
