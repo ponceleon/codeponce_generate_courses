@@ -234,13 +234,159 @@ app.post('/api/gemini/generate', authenticateToken, async (req, res) => {
   }
 });
 
+app.post('/api/gemini/generate-image', authenticateToken, async (req, res) => {
+  try {
+    const { prompt, model: modelNameFromRequest, generationConfig: userGenerationConfig, safetySettings } = req.body;
+
+    if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+      return res.status(400).json({ success: false, error: 'Se requiere proporcionar "prompt" como un string no vacío.' });
+    }
+
+    const modelName = modelNameFromRequest || 'gemini-2.0-flash-preview-image-generation'; // Default model
+
+    const genAI = await initializeGeminiAPI();
+    if (!genAI) return res.status(500).json({ success: false, error: 'Error al inicializar la API de Gemini' });
+
+    const contents = [{ role: "user", parts: [{ text: prompt }] }];
+
+    // Ensure responseModalities is set for image generation
+    const generationConfig = {
+      ...(userGenerationConfig || {}), // Spread existing user config or empty object
+      responseModalities: ["TEXT", "IMAGE"]
+    };
+    
+    const requestConfig = {
+      model: modelName,
+      contents: contents,
+      generationConfig: generationConfig,
+    };
+    if (safetySettings) requestConfig.safetySettings = safetySettings;
+
+    const geminiSdkResponse = await genAI.models.generateContent(requestConfig);
+    const apiResponse = geminiSdkResponse.response;
+
+    let tokenUsage = null;
+    if (apiResponse && apiResponse.usageMetadata) {
+        tokenUsage = apiResponse.usageMetadata;
+    } else if (geminiSdkResponse.usageMetadata) {
+        tokenUsage = geminiSdkResponse.usageMetadata;
+    }
+
+    const resultInfo = {
+        modelUsed: modelName,
+        tokenUsage: tokenUsage || "Información de tokens no disponible en la respuesta.",
+        generationConfigUsed: generationConfig, // Use the merged/created one
+        safetySettingsUsed: safetySettings,
+    };
+
+    if (apiResponse && apiResponse.promptFeedback && apiResponse.promptFeedback.blockReason) {
+      return res.status(400).json({
+        success: false,
+        result: resultInfo,
+        error: 'Contenido bloqueado por la API de Gemini',
+        details: `Razón: ${apiResponse.promptFeedback.blockReasonMessage || apiResponse.promptFeedback.blockReason}`,
+        promptFeedback: apiResponse.promptFeedback
+      });
+    } else if (geminiSdkResponse.promptFeedback && geminiSdkResponse.promptFeedback.blockReason) {
+         return res.status(400).json({
+            success: false,
+            result: resultInfo,
+            error: 'Contenido bloqueado por la API de Gemini',
+            details: `Razón: ${geminiSdkResponse.promptFeedback.blockReasonMessage || geminiSdkResponse.promptFeedback.blockReason}`,
+            promptFeedback: geminiSdkResponse.promptFeedback
+        });
+    }
+
+    let imageBase64 = null;
+    let mimeType = null;
+
+    if (apiResponse && apiResponse.candidates && apiResponse.candidates.length > 0 &&
+        apiResponse.candidates[0].content && apiResponse.candidates[0].content.parts) {
+      for (const part of apiResponse.candidates[0].content.parts) {
+        if (part.inlineData && part.inlineData.data) {
+          imageBase64 = part.inlineData.data;
+          mimeType = part.inlineData.mimeType;
+          break; // Assuming one image for now
+        }
+        // Optional: Log text parts if needed
+        // if (part.text) {
+        //   console.log("Text part received:", part.text);
+        // }
+      }
+    } else if (geminiSdkResponse.candidates && geminiSdkResponse.candidates.length > 0 && // Fallback
+               geminiSdkResponse.candidates[0].content && geminiSdkResponse.candidates[0].content.parts) {
+       for (const part of geminiSdkResponse.candidates[0].content.parts) {
+        if (part.inlineData && part.inlineData.data) {
+          imageBase64 = part.inlineData.data;
+          mimeType = part.inlineData.mimeType;
+          break; // Assuming one image for now
+        }
+      }
+    }
+
+
+    if (!imageBase64) {
+      console.error("No se encontró imagen en la respuesta de Gemini:", JSON.stringify(geminiSdkResponse, null, 2));
+      return res.status(500).json({
+        success: false,
+        result: resultInfo,
+        error: 'No se encontró imagen en la respuesta de la API de Gemini.',
+        details: "La estructura de la respuesta no contenía datos de imagen esperados."
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        imageBase64: imageBase64,
+        mimeType: mimeType,
+        modelUsed: modelName
+      },
+      result: resultInfo // Including full resultInfo for consistency
+    });
+
+  } catch (error) {
+    console.error('Error al generar imagen:', error);
+    console.error('Stack trace:', error.stack);
+    const errorResultInfo = {
+        modelUsed: req.body.model || 'gemini-2.0-flash-preview-image-generation', // Attempt to get model
+        tokenUsage: "No disponible debido a error en la generación.",
+        generationConfigUsed: req.body.generationConfig, // User provided
+        safetySettingsUsed: req.body.safetySettings,
+    };
+
+    if (error.name && error.name.includes('Google')) {
+        return res.status(500).json({
+            success: false,
+            result: errorResultInfo,
+            error: `Error de la API de Gemini: ${error.name}`,
+            details: error.message,
+            error_object: error
+        });
+    }
+    
+    return res.status(500).json({
+      success: false,
+      result: errorResultInfo,
+      error: 'Error al procesar la solicitud de generación de imagen',
+      details: error.message
+    });
+  }
+});
+
 
 // Rutas /api/gemini/models y /api/health (sin cambios significativos)
 app.get('/api/gemini/models', authenticateToken, async (req, res) => {
   try {
+    // Added image generation models to the list
     return res.json({
       success: true,
-      data: { models: [ 'gemini-1.5-pro-latest', 'gemini-1.5-flash-latest', 'gemini-pro' ] }
+      data: { models: [
+        'gemini-1.5-pro-latest', 
+        'gemini-1.5-flash-latest', 
+        'gemini-pro',
+        'gemini-2.0-flash-preview-image-generation' // Example image model
+      ] }
     });
   } catch (error) {
     console.error('Error al obtener modelos:', error);

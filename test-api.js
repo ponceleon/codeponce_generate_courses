@@ -51,6 +51,33 @@ async function testAPI() {
     const generateData = await generateResponse.json();
     console.log('Respuesta:', generateData);
     console.log('-----------------------------------');
+
+    // 4. Generar imagen
+    console.log('Probando generación de imágenes...');
+    const imageGeneratePayload = {
+      prompt: "A picture of a cat wearing a party hat",
+      model: "gemini-2.0-flash-preview-image-generation" // Optional: specify a model
+    };
+    console.log('Payload para generar imagen:', imageGeneratePayload);
+
+    const imageResponse = await fetch(`${API_URL}/api/gemini/generate-image`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${TOKEN}`
+      },
+      body: JSON.stringify(imageGeneratePayload)
+    });
+
+    const imageData = await imageResponse.json();
+    console.log('Respuesta de generación de imagen:', imageData);
+
+    if (imageData && imageData.success === true && imageData.data && typeof imageData.data.imageBase64 === 'string' && imageData.data.imageBase64.length > 0) {
+      console.log('Prueba de generación de imagen EXITOSA: Recibida imagen base64.');
+    } else {
+      console.error('Prueba de generación de imagen FALLIDA:', imageData);
+    }
+    console.log('-----------------------------------');
     
   } catch (error) {
     console.error('Error al probar la API:', error);
