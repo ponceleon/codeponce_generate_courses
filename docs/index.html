@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Gemini Proxy - Documentación v1.0.0</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .endpoint { background: #f9f9f9; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .method { display: inline-block; padding: 4px 8px; border-radius: 4px; color: white; font-weight: bold; }
+        .get { background-color: #28a745; }
+        .post { background-color: #007bff; }
+        .put { background-color: #ffc107; color: black; }
+        .delete { background-color: #dc3545; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        code { background: #f8f9fa; padding: 2px 4px; border-radius: 3px; }
+        .timestamp { color: #666; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 API Gemini Proxy - Documentación</h1>
+        <p><strong>Versión:</strong> 1.0.0</p>
+        <p><strong>Generado automáticamente:</strong> <span class="timestamp">2025-05-24T23:02:05.421Z</span></p>
+        <p><strong>Ambiente:</strong> development</p>
+        <p><strong>URL Base:</strong> <code>http://localhost:3000</code></p>
+    </div>
+    
+    <h2>📚 Endpoints Disponibles</h2>
+    
+    <div class="endpoint">
+        <h3><span class="method get">GET</span> /api/health</h3>
+        <p><strong>Descripción:</strong> Verificar el estado de la API</p>
+        <p><strong>Autenticación:</strong> No requerida</p>
+        <h4>Ejemplo de respuesta:</h4>
+        <pre><code>{
+  "success": true,
+  "data": {
+    "status": "online",
+    "message": "API Gemini Proxy funcionando correctamente"
+  }
+}</code></pre>
+    </div>
+    
+    <div class="endpoint">
+        <h3><span class="method get">GET</span> /api/gemini/models</h3>
+        <p><strong>Descripción:</strong> Obtener modelos disponibles de Gemini</p>
+        <p><strong>Autenticación:</strong> Bearer Token requerido</p>
+        <h4>Ejemplo de respuesta:</h4>
+        <pre><code>{
+  "success": true,
+  "data": {
+    "models": ["gemini-1.5-pro-latest", "gemini-1.5-flash-latest", "gemini-pro"]
+  }
+}</code></pre>
+    </div>
+    
+    <div class="endpoint">
+        <h3><span class="method post">POST</span> /api/gemini/generate</h3>
+        <p><strong>Descripción:</strong> Generar estructura de curso</p>
+        <p><strong>Autenticación:</strong> Bearer Token requerido</p>
+        <h4>Ejemplo de cuerpo de solicitud:</h4>
+        <pre><code>{
+  "model": "gemini-1.5-pro-latest",
+  "keywords": "JavaScript y desarrollo web",
+  "generationConfig": {
+    "maxOutputTokens": 2048,
+    "temperature": 0.7
+  }
+}</code></pre>
+    </div>
+    
+    <hr>
+    <p class="timestamp">Documentación generada automáticamente en deployment el 2025-05-24T23:02:05.421Z</p>
+</body>
+</html>

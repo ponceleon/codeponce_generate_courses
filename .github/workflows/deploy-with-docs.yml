@@ -1,0 +1,192 @@
+name: Deploy with Auto-Generated Documentation
+
+on:
+  push:
+    branches: [ main, production ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  # Job para generar y validar documentación
+  generate-docs:
+    runs-on: ubuntu-latest
+    name: Generate Documentation
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Generate documentation
+      env:
+        NODE_ENV: production
+        BASE_URL: ${{ secrets.PRODUCTION_URL || 'https://your-api.com' }}
+      run: npm run docs:build
+      
+    - name: Validate documentation
+      run: |
+        echo "🔍 Validating generated documentation..."
+        test -f docs/api-spec.json && echo "✅ OpenAPI spec generated"
+        test -f docs/README.md && echo "✅ Markdown docs generated"
+        test -f docs/index.html && echo "✅ HTML docs generated"
+        test -f docs/deployment-info.json && echo "✅ Deployment info generated"
+        
+    - name: Upload documentation artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: api-documentation
+        path: docs/
+        retention-days: 30
+        
+    # Opcional: Comentar en PR con link a documentación
+    - name: Comment PR with documentation
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const artifactUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `📚 **Documentación generada automáticamente**
+            
+            La documentación de la API ha sido generada y está disponible en los artefactos de este build.
+            
+            🔗 **Enlaces útiles:**
+            - [Ver artefactos de documentación](${artifactUrl})
+            - [Especificación OpenAPI generada](${artifactUrl}/api-spec.json)
+            
+            ✨ Esta documentación se desplegará automáticamente cuando se haga merge a la rama principal.`
+          });
+
+  # Job para deployment (solo en push a main/production)
+  deploy:
+    runs-on: ubuntu-latest
+    needs: generate-docs
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production')
+    name: Deploy to Production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run pre-deploy scripts
+      env:
+        NODE_ENV: production
+        BASE_URL: ${{ secrets.PRODUCTION_URL }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        API_TOKEN: ${{ secrets.API_TOKEN }}
+      run: npm run predeploy
+      
+    - name: Deploy application
+      env:
+        NODE_ENV: production
+        BASE_URL: ${{ secrets.PRODUCTION_URL }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        API_TOKEN: ${{ secrets.API_TOKEN }}
+      run: |
+        echo "🚀 Deploying application..."
+        # Aquí irían tus comandos de deployment específicos
+        # Ejemplos:
+        # - pm2 restart app
+        # - docker build & deploy
+        # - rsync a servidor
+        # - deploy a Heroku/Vercel/Railway
+        echo "✅ Application deployed successfully"
+        
+    - name: Deploy documentation to CDN/Static hosting
+      env:
+        NODE_ENV: production
+      run: |
+        echo "📚 Deploying documentation..."
+        # Opcional: subir documentación a CDN o hosting estático
+        # aws s3 sync docs/ s3://your-docs-bucket/
+        # vercel --prod docs/
+        # netlify deploy --prod --dir docs/
+        echo "✅ Documentation deployed successfully"
+        
+    - name: Run post-deploy verification
+      env:
+        BASE_URL: ${{ secrets.PRODUCTION_URL }}
+      run: |
+        echo "🔍 Verifying deployment..."
+        # Verificar que la API esté funcionando
+        curl -f "$BASE_URL/api/health" || exit 1
+        echo "✅ Health check passed"
+        
+        # Verificar que la documentación esté disponible
+        curl -f "$BASE_URL/doc.json" || exit 1
+        echo "✅ Documentation API working"
+        
+    - name: Notify deployment success
+      if: success()
+      run: |
+        echo "🎉 Deployment completed successfully!"
+        echo "📚 Documentation updated and available at: ${{ secrets.PRODUCTION_URL }}/doc"
+
+  # Job opcional para publicar documentación en GitHub Pages
+  publish-docs:
+    runs-on: ubuntu-latest
+    needs: generate-docs
+    if: github.ref == 'refs/heads/main'
+    name: Publish Documentation to GitHub Pages
+    
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    
+    steps:
+    - name: Download documentation artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: api-documentation
+        path: docs/
+        
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+      
+    - name: Upload to GitHub Pages
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: docs/
+        
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+      
+    - name: Comment with Pages URL
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.repos.createCommitComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            commit_sha: context.sha,
+            body: `📚 **Documentación publicada en GitHub Pages**
+            
+            🔗 **URL:** ${{ steps.deployment.outputs.page_url }}
+            
+            La documentación de la API está ahora disponible públicamente.`
+          }); 

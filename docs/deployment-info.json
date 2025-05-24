@@ -1,0 +1,8 @@
+{
+  "timestamp": "2025-05-24T23:02:05.421Z",
+  "version": "1.0.0",
+  "environment": "development",
+  "baseUrl": "http://localhost:3000",
+  "commit": "local",
+  "branch": "local"
+}

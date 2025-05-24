@@ -1,0 +1,611 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API Gemini Proxy",
+    "version": "1.0.0",
+    "description": "API intermedia para Gemini API protegida por token para generar cursos automáticamente",
+    "contact": {
+      "name": "Soporte API",
+      "email": "support@example.com"
+    },
+    "license": {
+      "name": "ISC",
+      "url": "https://opensource.org/licenses/ISC"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Servidor de desarrollo"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "string",
+        "description": "Token de autorización requerido. Formato: Bearer [TOKEN]"
+      }
+    },
+    "schemas": {
+      "Success": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "Descripción del error"
+          },
+          "details": {
+            "type": "string",
+            "example": "Detalles adicionales del error"
+          }
+        }
+      },
+      "HealthResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Success"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "example": "online"
+                  },
+                  "message": {
+                    "type": "string",
+                    "example": "API Gemini Proxy funcionando correctamente"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ModelsResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Success"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "models": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "example": [
+                      "gemini-1.5-pro-latest",
+                      "gemini-1.5-flash-latest",
+                      "gemini-pro"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "GenerateRequest": {
+        "type": "object",
+        "required": [
+          "model",
+          "keywords"
+        ],
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "Nombre del modelo de Gemini a utilizar",
+            "example": "gemini-1.5-pro-latest",
+            "enum": [
+              "gemini-1.5-pro-latest",
+              "gemini-1.5-flash-latest",
+              "gemini-pro"
+            ]
+          },
+          "keywords": {
+            "type": "string",
+            "description": "Palabras clave para generar el curso",
+            "example": "JavaScript y desarrollo web",
+            "minLength": 1
+          },
+          "generationConfig": {
+            "type": "object",
+            "description": "Configuración opcional para la generación",
+            "properties": {
+              "maxOutputTokens": {
+                "type": "integer",
+                "example": 2048,
+                "description": "Número máximo de tokens en la respuesta"
+              },
+              "temperature": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 2,
+                "example": 0.7,
+                "description": "Controla la creatividad de la respuesta (0-2)"
+              },
+              "topP": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "example": 0.8,
+                "description": "Controla la diversidad de la respuesta (0-1)"
+              },
+              "topK": {
+                "type": "integer",
+                "minimum": 1,
+                "example": 40,
+                "description": "Número de tokens candidatos considerados"
+              }
+            }
+          },
+          "safetySettings": {
+            "type": "array",
+            "description": "Configuraciones de seguridad para el contenido",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "example": "HARM_CATEGORY_HARASSMENT"
+                },
+                "threshold": {
+                  "type": "string",
+                  "example": "BLOCK_MEDIUM_AND_ABOVE"
+                }
+              }
+            }
+          },
+          "tools": {
+            "type": "array",
+            "description": "Herramientas adicionales para la generación",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "CourseStructure": {
+        "type": "object",
+        "properties": {
+          "course_title": {
+            "type": "string",
+            "description": "Título del curso generado",
+            "example": "Curso Completo de JavaScript y Desarrollo Web"
+          },
+          "modules": {
+            "type": "array",
+            "description": "Lista de módulos del curso",
+            "items": {
+              "type": "object",
+              "properties": {
+                "module_title": {
+                  "type": "string",
+                  "description": "Título del módulo",
+                  "example": "Fundamentos de JavaScript"
+                },
+                "lessons": {
+                  "type": "array",
+                  "description": "Lista de lecciones del módulo",
+                  "items": {
+                    "type": "string",
+                    "description": "Título de la lección",
+                    "example": "Variables y tipos de datos"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "GenerateResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Success"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "result": {
+                "type": "object",
+                "properties": {
+                  "modelUsed": {
+                    "type": "string",
+                    "example": "gemini-1.5-pro-latest"
+                  },
+                  "tokenUsage": {
+                    "type": "object",
+                    "properties": {
+                      "promptTokens": {
+                        "type": "integer",
+                        "example": 150
+                      },
+                      "candidatesTokens": {
+                        "type": "integer",
+                        "example": 500
+                      },
+                      "totalTokens": {
+                        "type": "integer",
+                        "example": 650
+                      }
+                    }
+                  },
+                  "generationConfigUsed": {
+                    "type": "object",
+                    "description": "Configuración utilizada en la generación"
+                  },
+                  "safetySettingsUsed": {
+                    "type": "array",
+                    "description": "Configuraciones de seguridad utilizadas"
+                  }
+                }
+              },
+              "data": {
+                "$ref": "#/components/schemas/CourseStructure"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Verificar el estado de la API",
+        "description": "Endpoint para verificar que la API está funcionando correctamente",
+        "tags": [
+          "Health"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "API funcionando correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "status": "online",
+                    "message": "API Gemini Proxy funcionando correctamente"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gemini/models": {
+      "get": {
+        "summary": "Obtener modelos disponibles de Gemini",
+        "description": "Retorna la lista de modelos de Gemini disponibles para usar en la generación de contenido",
+        "tags": [
+          "Gemini"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de modelos obtenida exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelsResponse"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "models": [
+                      "gemini-1.5-pro-latest",
+                      "gemini-1.5-flash-latest",
+                      "gemini-pro"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token no proporcionado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "Acceso no autorizado: Token requerido"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "Acceso prohibido: Token inválido"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gemini/generate": {
+      "post": {
+        "summary": "Generar estructura de curso usando Gemini",
+        "description": "Genera automáticamente la estructura de un curso completo basado en palabras clave.\n\nEl curso generado incluye:\n- Un título creativo y descriptivo\n- 7 módulos distintos\n- Entre 25 y 40 lecciones distribuidas en los módulos\n- Todo el contenido en español\n\n## Ejemplo de uso con cURL:\n```bash\ncurl -X POST \"http://localhost:3000/api/gemini/generate\" \\\n  -H \"Authorization: Bearer TU_TOKEN_AQUI\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"model\": \"gemini-1.5-pro-latest\",\n    \"keywords\": \"JavaScript y desarrollo web\",\n    \"generationConfig\": {\n      \"maxOutputTokens\": 2048,\n      \"temperature\": 0.7\n    }\n  }'\n```\n",
+        "tags": [
+          "Gemini"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateRequest"
+              },
+              "examples": {
+                "basico": {
+                  "summary": "Solicitud básica",
+                  "value": {
+                    "model": "gemini-1.5-pro-latest",
+                    "keywords": "JavaScript y desarrollo web"
+                  }
+                },
+                "avanzado": {
+                  "summary": "Solicitud con configuración personalizada",
+                  "value": {
+                    "model": "gemini-1.5-pro-latest",
+                    "keywords": "Machine Learning y Python",
+                    "generationConfig": {
+                      "maxOutputTokens": 2048,
+                      "temperature": 0.7,
+                      "topP": 0.8,
+                      "topK": 40
+                    },
+                    "safetySettings": [
+                      {
+                        "category": "HARM_CATEGORY_HARASSMENT",
+                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Curso generado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateResponse"
+                },
+                "examples": {
+                  "exitoso": {
+                    "summary": "Generación exitosa",
+                    "value": {
+                      "success": true,
+                      "result": {
+                        "modelUsed": "gemini-1.5-pro-latest",
+                        "tokenUsage": {
+                          "promptTokens": 150,
+                          "candidatesTokens": 500,
+                          "totalTokens": 650
+                        },
+                        "generationConfigUsed": {
+                          "maxOutputTokens": 2048,
+                          "temperature": 0.7
+                        },
+                        "safetySettingsUsed": null
+                      },
+                      "data": {
+                        "course_title": "Curso Completo de JavaScript y Desarrollo Web",
+                        "modules": [
+                          {
+                            "module_title": "Fundamentos de JavaScript",
+                            "lessons": [
+                              "Variables y tipos de datos",
+                              "Operadores y expresiones",
+                              "Estructuras de control"
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "con_texto_plano": {
+                    "summary": "Respuesta no parseada como JSON",
+                    "value": {
+                      "success": true,
+                      "result": {
+                        "modelUsed": "gemini-1.5-pro-latest",
+                        "tokenUsage": "Información de tokens no disponible en la respuesta."
+                      },
+                      "data": {
+                        "raw_text": "```json\n{\n  \"course_title\": \"...\"\n}\n```",
+                        "parse_error": "El contenido devuelto por Gemini no es un JSON válido o no está en el formato esperado."
+                      },
+                      "message": "El contenido devuelto por Gemini no pudo ser interpretado como JSON estructurado."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error en los parámetros de entrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "sin_modelo": {
+                    "summary": "Modelo no especificado",
+                    "value": {
+                      "success": false,
+                      "error": "Se requiere especificar un modelo"
+                    }
+                  },
+                  "sin_keywords": {
+                    "summary": "Keywords no proporcionadas",
+                    "value": {
+                      "success": false,
+                      "error": "Se requiere proporcionar \"keywords\" (palabras clave) como un string no vacío."
+                    }
+                  },
+                  "contenido_bloqueado": {
+                    "summary": "Contenido bloqueado por filtros de seguridad",
+                    "value": {
+                      "success": false,
+                      "result": {
+                        "modelUsed": "gemini-1.5-pro-latest",
+                        "tokenUsage": "No disponible debido a bloqueo de contenido."
+                      },
+                      "error": "Contenido bloqueado por la API de Gemini",
+                      "details": "Razón: SAFETY",
+                      "promptFeedback": {
+                        "blockReason": "SAFETY"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token no proporcionado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "Acceso no autorizado: Token requerido"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": "Acceso prohibido: Token inválido"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "error_gemini_api": {
+                    "summary": "Error en la API de Gemini",
+                    "value": {
+                      "success": false,
+                      "result": {
+                        "modelUsed": "gemini-1.5-pro-latest",
+                        "tokenUsage": "No disponible debido a error en la generación."
+                      },
+                      "error": "Error de la API de Gemini: GoogleGenerativeAIError",
+                      "details": "API key not valid. Please pass a valid API key."
+                    }
+                  },
+                  "error_inicializacion": {
+                    "summary": "Error al inicializar Gemini",
+                    "value": {
+                      "success": false,
+                      "error": "Error al inicializar la API de Gemini"
+                    }
+                  },
+                  "error_general": {
+                    "summary": "Error general del servidor",
+                    "value": {
+                      "success": false,
+                      "result": {
+                        "modelUsed": "gemini-1.5-pro-latest",
+                        "tokenUsage": "No disponible debido a error en la generación."
+                      },
+                      "error": "Error al procesar la solicitud",
+                      "details": "Connection timeout"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": []
+}

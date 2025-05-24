@@ -8,7 +8,14 @@
     "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "docs:generate": "node -e \"const fs = require('fs'); const spec = require('./swagger.config'); fs.writeFileSync('./docs/api-spec.json', JSON.stringify(spec, null, 2))\"",
-    "docs:serve": "npm start"
+    "docs:serve": "npm start",
+    "docs:build": "npm run docs:generate && node scripts/generate-static-docs.js",
+    "predeploy": "npm run docs:build",
+    "deploy": "echo \"Deployment command here\"",
+    "postdeploy": "echo \"Documentation generated and deployed successfully\"",
+    "build": "npm run docs:build",
+    "prebuild": "echo \"Preparing build with documentation generation\"",
+    "postbuild": "echo \"Build completed with updated documentation\""
   },
   "keywords": [
     "gemini",
