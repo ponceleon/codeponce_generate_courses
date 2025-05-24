@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 
 // Vamos a usar una variable para almacenar la instancia de GoogleGenAI
 let genAI = null;
@@ -22,8 +24,18 @@ const initializeGeminiAPI = async () => {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Crear carpeta images si no existe
+const imagesDir = path.join(__dirname, 'images');
+if (!fs.existsSync(imagesDir)) {
+  fs.mkdirSync(imagesDir, { recursive: true });
+  console.log('📁 Carpeta "images" creada automáticamente');
+}
+
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
+
+// Servir archivos estáticos desde la carpeta images
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -328,13 +340,34 @@ app.post('/api/gemini/generate-image', authenticateToken, async (req, res) => {
       });
     }
 
+    // Guardar imagen en el servidor
+    const timestamp = Date.now();
+    const sanitizedModelName = modelName.replace(/[\/\\:*?"<>|]/g, '_');
+    const filename = `generated_${timestamp}_${sanitizedModelName}.png`;
+    const imagePath = path.join(__dirname, 'images', filename);
+    
+    try {
+      fs.writeFileSync(imagePath, Buffer.from(imageBase64, 'base64'));
+      console.log(`💾 Imagen guardada exitosamente: images/${filename}`);
+    } catch (saveError) {
+      console.error('Error al guardar la imagen:', saveError);
+      // Continuar con la respuesta pero sin la URL del archivo
+    }
+
+    // Generar URL de acceso a la imagen
+    const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+    const imageUrl = `${baseUrl}/images/${filename}`;
+
     return res.json({
       success: true,
       data: {
         imageBase64: imageBase64,
         mimeType: mimeType,
         textContent: textContent,
-        modelUsed: modelName
+        modelUsed: modelName,
+        imageUrl: imageUrl,
+        filename: filename,
+        savedPath: `images/${filename}`
       },
       result: resultInfo
     });
