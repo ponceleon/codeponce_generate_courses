@@ -9,7 +9,7 @@ let genAI = null;
 const initializeGeminiAPI = async () => {
   try {
     if (!genAI) {
-      const { GoogleGenAI, Modality } = await import('@google/genai'); // MODIFIED
+      const { GoogleGenAI } = await import('@google/genai');
       genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     }
     return genAI;
@@ -252,7 +252,7 @@ app.post('/api/gemini/generate-image', authenticateToken, async (req, res) => {
     // Ensure responseModalities is set for image generation
     const generationConfig = {
       ...(userGenerationConfig || {}), // Spread existing user config or empty object
-      responseModalities: [Modality.TEXT, Modality.IMAGE] // MODIFIED
+      responseModalities: ["TEXT", "IMAGE"]
     };
     
     const requestConfig = {
