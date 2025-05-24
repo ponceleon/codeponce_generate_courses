@@ -1,7 +1,23 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { GoogleGenAI } = require('@google/genai'); // Usando el SDK que especificaste
+
+// Vamos a usar una variable para almacenar la instancia de GoogleGenAI
+let genAI = null;
+
+// Función para inicializar la API de forma asíncrona
+const initializeGeminiAPI = async () => {
+  try {
+    if (!genAI) {
+      const { GoogleGenAI } = await import('@google/genai');
+      genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    }
+    return genAI;
+  } catch (error) {
+    console.error('Error al inicializar Gemini API:', error);
+    return null;
+  }
+};
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,16 +31,6 @@ const authenticateToken = (req, res, next) => {
   if (!token) return res.status(401).json({ success: false, error: 'Acceso no autorizado: Token requerido' });
   if (token !== process.env.API_TOKEN) return res.status(403).json({ success: false, error: 'Acceso prohibido: Token inválido' });
   next();
-};
-
-// TU FORMA ORIGINAL DE INICIALIZAR - MANTENIDA
-const initializeGeminiAPI = () => {
-  try {
-    return new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  } catch (error) {
-    console.error('Error al inicializar Gemini API:', error);
-    return null;
-  }
 };
 
 const SYSTEM_PROMPT_TEMPLATE = `You are an experienced curriculum developer specializing in creating comprehensive and engaging online courses. Your task is to design a course outline, focusing on providing a structured learning path for students.
@@ -71,7 +77,7 @@ app.post('/api/gemini/generate', authenticateToken, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Se requiere proporcionar "keywords" (palabras clave) como un string no vacío.' });
     }
 
-    const genAI = initializeGeminiAPI();
+    const genAI = await initializeGeminiAPI();
     if (!genAI) return res.status(500).json({ success: false, error: 'Error al inicializar la API de Gemini' });
 
     const populatedPrompt = SYSTEM_PROMPT_TEMPLATE.replace(/{keywords}/g, keywords);
