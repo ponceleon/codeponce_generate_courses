@@ -4,7 +4,7 @@ const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger.config');
 
-const logs = require('./services/DirectusServices');
+const logs = require('./services/directusServices');
 
 // Vamos a usar una variable para almacenar la instancia de GoogleGenAI
 let genAI = null;
