@@ -278,7 +278,8 @@ The content must be in Spanish.`;
 
 app.post('/api/gemini/generate', authenticateToken, async (req, res) => {
   try {
-    const { model: modelName, keywords, generationConfig, safetySettings, tools } = req.body;
+ 
+    const { model: modelName, keywords, generationConfig, safetySettings, tools, token } = req.body;
 
     if (!modelName) return res.status(400).json({ success: false, error: 'Se requiere especificar un modelo' });
     if (!keywords || typeof keywords !== 'string' || keywords.trim() === '') {
@@ -322,6 +323,7 @@ app.post('/api/gemini/generate', authenticateToken, async (req, res) => {
         tokenUsage = geminiSdkResponse.usageMetadata;
     }
 
+    // console.log(tokenUsage)
 
     const resultInfo = {
         modelUsed: modelName,
@@ -394,37 +396,33 @@ app.post('/api/gemini/generate', authenticateToken, async (req, res) => {
     let jsonData;
     try {
       jsonData = JSON.parse(textToParse);
-
       logs.logGeminiAPI({
         modelo: modelName,
 
-        tokens_de_entrada: tokenUsage ? tokenUsage.promptTokens : "No disponible",
-        tokens_de_salida: tokenUsage ? tokenUsage.candidatesTokens : "No disponible",
+        tokens_de_entrada: tokenUsage ? tokenUsage.promptTokenCount : "No disponible",
+        tokens_de_salida: tokenUsage ? tokenUsage.candidatesTokenCount : "No disponible",
 
-        user: req.user ? req.user.username : "Desconocido",
-
+        user: "Desconocido",
+        userdata: null,
+        
         env: "desarrollo",
         status: 'success',
 
         url: req.originalUrl,
 
-        header_sended: req.headers,
-        request_json: req.body,
+        header_sended: "header de entrada",
 
-        header_recieved: req.headers,
-        response_json: geminiSdkResponse
-      })
-      
-      // logGeneral({
-      //   action: 'generate_course',
-      //   model: modelName,
-      //   keywords: keywords,
-      //   generationConfig: generationConfig,
-      //   safetySettings: safetySettings,
-      //   rawTextOutput: rawTextOutput,
-      //   jsonData: jsonData,
-      //   tokenUsage: tokenUsage
+
+        request_json: req.body,
+        header_recieved: "header de salida",
+        response_LLM_json: geminiSdkResponse
+      },token)
+
+      // console.log('Respuesta de Gemini:', JSON.stringify(geminiSdkResponse, null, 2));
+      // logs.logGeneral({
+      //   json_data: JSON.parse(geminiSdkResponse)
       // }) 
+
 
       return res.json({
         success: true,
@@ -499,7 +497,7 @@ app.listen(PORT, () => {
 
 app.post('/api/gemini/generate-lesson-content', authenticateToken, async (req, res) => {
   try {
-    const { lessonId, context } = req.body;
+    const { lessonId, context, token } = req.body;
     if (!lessonId || !context) {
       return res.status(400).json({ error: 'Faltan lessonId o contexto.' });
     }

@@ -6,20 +6,59 @@ class DirectusServices {
     this.apiToken = process.env.DIRECTUS_TOKEN;
   }
 
-  // Base principal de consulta a directus segun la coleccion
-  async createLog(collection, data) {
-    try {
-      const response = await axios.post(
-        `${this.baseURL}/items/${collection}`,
-        data,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiToken}`,
-            'Content-Type': 'application/json'
-          }
+    // Helper function to get user data
+    async getUserData(token) {
+        try {
+            console.log('Fetching user data from:', `${this.baseURL}/users/me`);
+            const response = await fetch(`${this.baseURL}/users/me`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            });
+            
+            // console.log('User data response status:', response.status);
+            
+            if (!response.ok) {
+            const errorText = await response.text();
+            console.error('User data error response:', errorText);
+            throw new Error(`Failed to fetch user data: ${response.statusText} - ${errorText}`);
+            }
+            
+            const data = await response.json();
+            // console.log('User data received:', data);
+            return data;
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+            throw error;
         }
-      );
-      return response.data;
+    }
+
+  // Base principal de consulta a directus segun la coleccion
+  async createLog(collection, data,token) {
+    try {
+        const userData = await this.getUserData(token);
+
+        const userdataRefactor= {
+            id: userData.data.id,
+            name: userData.data.first_name + ' ' + userData.data.last_name,
+            email: userData.data.email
+        }
+        data.user = userdataRefactor.id
+        data.userdata = userdataRefactor
+        
+        const response = await axios.post(
+            `${this.baseURL}/items/${collection}`,
+            data,
+            {
+            headers: {
+                'Authorization': `Bearer ${this.apiToken}`,
+                'Content-Type': 'application/json'
+            }
+            }
+        );
+        return response.data;
+
     } catch (error) {
       console.error(`Error guardando log en ${collection}:`, error.message);
       return null;
@@ -27,13 +66,13 @@ class DirectusServices {
   }
 
   // Log para api gemini
-  async logGeminiAPI(data) {
-    return this.createLog('logs_geminiapi', data);
+  async logGeminiAPI(data,token) {
+    return this.createLog('logs_geminiapi', data,token);
   }
 
   // Logs para la tabla logs
-  async logGeneral(data) {
-    return this.createLog('logs', data);
+  async logGeneral(data,token) {
+    return this.createLog('logs', data,token);
   }
 
 }
