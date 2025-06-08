@@ -396,6 +396,7 @@ app.post('/api/gemini/generate', authenticateToken, async (req, res) => {
     let jsonData;
     try {
       jsonData = JSON.parse(textToParse);
+
       logs.logGeminiAPI({
         modelo: modelName,
 
@@ -404,17 +405,17 @@ app.post('/api/gemini/generate', authenticateToken, async (req, res) => {
 
         user: "Desconocido",
         userdata: null,
-        
-        env: "desarrollo",
+
+        env: "Creacion de curso",
         status: 'success',
 
         url: req.originalUrl,
 
-        header_sended: "header de entrada",
+        headers_sended: "header de entrada",
 
 
         request_json: req.body,
-        header_recieved: "header de salida",
+        headers_recieved: "header de salida",
         response_LLM_json: geminiSdkResponse
       },token)
 
@@ -505,10 +506,10 @@ app.post('/api/gemini/generate-lesson-content', authenticateToken, async (req, r
       return res.status(500).json({ error: 'Configuración de API de Gemini incompleta en el servidor.' });
     }
 
+    
     const lessonTitle = context.lessonData?.titulo || context.lessonData;
     const moduleTitle = context.moduleTitle;
     const courseTitle = context.currentCourse?.titulo || context.courseId;
-
     const prompt = `Eres un instructor experto. Genera contenido educativo completo y detallado para una lección.
 
 **Información de la lección:**
@@ -537,6 +538,28 @@ Usa formato Markdown con encabezados, listas, código y otros elementos de forma
     if (!generatedContent) {
       throw new Error('La API de Gemini no devolvió contenido.');
     }
+
+    logs.logGeminiAPI({
+        modelo: response.modelVersion,
+
+        tokens_de_entrada: response.usageMetadata ? response.usageMetadata.promptTokenCount : "No disponible",
+        tokens_de_salida: response.usageMetadata ? response.usageMetadata.candidatesTokenCount : "No disponible",
+
+        user: "Desconocido",
+        userdata: null,
+
+        env: "Creacion de curso",
+        status: 'success',
+
+        url: req.originalUrl,
+
+        headers_sended: "header de entrada",
+
+
+        request_json: req.body,
+        headers_recieved: "header de salida",
+        response_LLM_json: generatedContent
+    },token)
 
     return res.json({ content: generatedContent });
   } catch (error) {
