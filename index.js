@@ -4,6 +4,8 @@ const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger.config');
 
+const logs = require('./services/DirectusServices');
+
 // Vamos a usar una variable para almacenar la instancia de GoogleGenAI
 let genAI = null;
 
@@ -392,6 +394,38 @@ app.post('/api/gemini/generate', authenticateToken, async (req, res) => {
     let jsonData;
     try {
       jsonData = JSON.parse(textToParse);
+
+      // logs.logGeminiAPI({
+      //   modelo: modelName,
+
+      //   tokens_de_entrada: tokenUsage ? tokenUsage.promptTokens : "No disponible",
+      //   tokens_de_salida: tokenUsage ? tokenUsage.candidatesTokens : "No disponible",
+
+      //   user: req.user ? req.user.username : "Desconocido",
+
+      //   env: "desarrollo",
+      //   status: 'success',
+
+      //   url: req.originalUrl,
+
+      //   header_sended: req.headers,
+      //   request_json: req.body,
+
+      //   header_recieved: req.headers,
+      //   response_json: jsonData
+      // })
+      
+      // logGeneral({
+      //   action: 'generate_course',
+      //   model: modelName,
+      //   keywords: keywords,
+      //   generationConfig: generationConfig,
+      //   safetySettings: safetySettings,
+      //   rawTextOutput: rawTextOutput,
+      //   jsonData: jsonData,
+      //   tokenUsage: tokenUsage
+      // }) 
+
       return res.json({
         success: true,
         result: resultInfo,
