@@ -395,25 +395,25 @@ app.post('/api/gemini/generate', authenticateToken, async (req, res) => {
     try {
       jsonData = JSON.parse(textToParse);
 
-      // logs.logGeminiAPI({
-      //   modelo: modelName,
+      logs.logGeminiAPI({
+        modelo: modelName,
 
-      //   tokens_de_entrada: tokenUsage ? tokenUsage.promptTokens : "No disponible",
-      //   tokens_de_salida: tokenUsage ? tokenUsage.candidatesTokens : "No disponible",
+        tokens_de_entrada: tokenUsage ? tokenUsage.promptTokens : "No disponible",
+        tokens_de_salida: tokenUsage ? tokenUsage.candidatesTokens : "No disponible",
 
-      //   user: req.user ? req.user.username : "Desconocido",
+        user: req.user ? req.user.username : "Desconocido",
 
-      //   env: "desarrollo",
-      //   status: 'success',
+        env: "desarrollo",
+        status: 'success',
 
-      //   url: req.originalUrl,
+        url: req.originalUrl,
 
-      //   header_sended: req.headers,
-      //   request_json: req.body,
+        header_sended: req.headers,
+        request_json: req.body,
 
-      //   header_recieved: req.headers,
-      //   response_json: jsonData
-      // })
+        header_recieved: req.headers,
+        response_json: jsonData
+      })
       
       // logGeneral({
       //   action: 'generate_course',
