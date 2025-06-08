@@ -461,3 +461,58 @@ app.get('/api/health', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Servidor funcionando en el puerto ${PORT}`);
 });
+
+
+app.post('/api/gemini/generate-lesson-content', authenticateToken, async (req, res) => {
+  try {
+    const { lessonId, context } = req.body;
+    if (!lessonId || !context) {
+      return res.status(400).json({ error: 'Faltan lessonId o contexto.' });
+    }
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({ error: 'Configuración de API de Gemini incompleta en el servidor.' });
+    }
+
+    const lessonTitle = context.lessonData?.titulo || context.lessonData;
+    const moduleTitle = context.moduleTitle;
+    const courseTitle = context.currentCourse?.titulo || context.courseId;
+
+    const prompt = `Eres un instructor experto. Genera contenido educativo completo y detallado para una lección.
+
+**Información de la lección:**
+- Título de la lección: "${lessonTitle}"
+- Módulo: "${moduleTitle}"
+- Curso: "${courseTitle}"
+
+**Instrucciones:**
+Crea contenido educativo en formato Markdown que incluya:
+- Introducción y objetivos de la lección
+- Explicaciones conceptuales claras
+- Ejemplos prácticos (incluye código si es relevante)
+- Puntos clave o resumen
+- Ejercicios o actividades sugeridas (si aplica)
+
+El contenido debe ser didáctico, bien estructurado y apropiado para el nivel del curso.
+Usa formato Markdown con encabezados, listas, código y otros elementos de formato.`;
+
+    const genAI = await initializeGeminiAPI();
+    const response = await genAI.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: prompt,
+    });
+
+    const generatedContent = response.text;
+    if (!generatedContent) {
+      throw new Error('La API de Gemini no devolvió contenido.');
+    }
+
+    return res.json({ content: generatedContent });
+  } catch (error) {
+    let errorMessage = 'Error al generar el contenido de la lección.';
+    if (error.message) errorMessage += ` Detalles: ${error.message}`;
+    if (error.message && (error.message.toLowerCase().includes('api key') || error.message.toLowerCase().includes('gemini'))) {
+      errorMessage = 'Ocurrió un problema con el servicio de generación de contenido. Inténtalo más tarde.';
+    }
+    return res.status(500).json({ error: errorMessage });
+  }
+});
