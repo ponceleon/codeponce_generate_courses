@@ -546,7 +546,7 @@ Usa formato Markdown con encabezados, listas, código y otros elementos de forma
         tokens_de_salida: response.usageMetadata ? response.usageMetadata.candidatesTokenCount : "No disponible",
 
         user: "Desconocido",
-        userdata: null,
+        userdata: "Desconocido",
 
         env: "Creacion de curso",
         status: 'success',

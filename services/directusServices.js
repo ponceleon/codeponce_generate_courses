@@ -4,13 +4,14 @@ class DirectusServices {
   constructor() {
     this.baseURL = process.env.DIRECTUS_URL;
     this.apiToken = process.env.DIRECTUS_TOKEN;
+    this.usersURL = process.env.DIRECTUS_USERS_URL
   }
 
     // Helper function to get user data
     async getUserData(token) {
         try {
-            console.log('Fetching user data from:', `${this.baseURL}/users/me`);
-            const response = await fetch(`${this.baseURL}/users/me`, {
+            console.log('Fetching user data from:', `${this.usersURL}/users/me`);
+            const response = await fetch(`${this.usersURL}/users/me`, {
             headers: {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json',
