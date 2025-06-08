@@ -1,33 +1,40 @@
-const { directus } = require('./directusConnect');
-
+const axios = require('axios');
 
 class DirectusServices {
+  constructor() {
+    this.baseURL = process.env.DIRECTUS_URL;
+    this.apiToken = process.env.DIRECTUS_TOKEN;
+  }
 
-    // directus = new Directus(process.env.DIRECTUS_URL, {
-    // auth: {
-    //     staticToken: process.env.DIRECTUS_TOKEN // Usa un token de servicio o admin
-    // }
-    // });
-
-    // Metodo base para guardar logs en directus
-    async logToDirectus(collection, data) {
+  // Base principal de consulta a directus segun la coleccion
+  async createLog(collection, data) {
     try {
-        const result = await directus.items(collection).createOne(data);
-        return result;
+      const response = await axios.post(
+        `${this.baseURL}/items/${collection}`,
+        data,
+        {
+          headers: {
+            'Authorization': `Bearer ${this.apiToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      return response.data;
     } catch (error) {
-        console.error(`Error guardando log en ${collection}:`, error);
-        return null;
+      console.error(`Error guardando log en ${collection}:`, error.message);
+      return null;
     }
-    }
+  }
 
-    // Metodos espeficicos para cada log
-    async logGeminiAPI(data) {
-        return logToDirectus('logs_geminiapi', data);
-    }
+  // Log para api gemini
+  async logGeminiAPI(data) {
+    return this.createLog('logs_geminiapi', data);
+  }
 
-    async logGeneral(data) {
-        return logToDirectus('logs', data);
-    }
+  // Logs para la tabla logs
+  async logGeneral(data) {
+    return this.createLog('logs', data);
+  }
 
 }
 
