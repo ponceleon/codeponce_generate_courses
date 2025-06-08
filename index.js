@@ -412,7 +412,7 @@ app.post('/api/gemini/generate', authenticateToken, async (req, res) => {
         request_json: req.body,
 
         header_recieved: req.headers,
-        response_json: jsonData
+        response_json: geminiSdkResponse
       })
       
       // logGeneral({
