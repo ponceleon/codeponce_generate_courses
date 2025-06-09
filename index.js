@@ -279,7 +279,7 @@ The content must be in Spanish.`;
 app.post('/api/gemini/generate', authenticateToken, async (req, res) => {
   try {
  
-    const { model: modelName, keywords, generationConfig, safetySettings, tools, token } = req.body;
+    const { model: modelName, keywords, generationConfig, safetySettings, tools, token, userData } = req.body;
 
     if (!modelName) return res.status(400).json({ success: false, error: 'Se requiere especificar un modelo' });
     if (!keywords || typeof keywords !== 'string' || keywords.trim() === '') {
@@ -396,6 +396,7 @@ app.post('/api/gemini/generate', authenticateToken, async (req, res) => {
     let jsonData;
     try {
       jsonData = JSON.parse(textToParse);
+      console.log("user:", userData);
 
       logs.logGeminiAPI({
         modelo: modelName,
@@ -403,8 +404,8 @@ app.post('/api/gemini/generate', authenticateToken, async (req, res) => {
         tokens_de_entrada: tokenUsage ? tokenUsage.promptTokenCount : "No disponible",
         tokens_de_salida: tokenUsage ? tokenUsage.candidatesTokenCount : "No disponible",
 
-        user: "Desconocido",
-        userdata: null,
+        user: userData.id ? userData.id : "Desconocido",
+        userdata: userData ? userData : "Desconocido",
 
         env: "Creacion de curso",
         status: 'success',
