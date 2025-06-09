@@ -499,7 +499,7 @@ app.listen(PORT, () => {
 
 app.post('/api/gemini/generate-lesson-content', authenticateToken, async (req, res) => {
   try {
-    const { lessonId, context, token } = req.body;
+    const { lessonId, context, user } = req.body;
     if (!lessonId || !context) {
       return res.status(400).json({ error: 'Faltan lessonId o contexto.' });
     }
@@ -539,17 +539,17 @@ Usa formato Markdown con encabezados, listas, código y otros elementos de forma
     if (!generatedContent) {
       throw new Error('La API de Gemini no devolvió contenido.');
     }
-
+    const token = 123456
     logs.logGeminiAPI({
         modelo: response.modelVersion,
 
         tokens_de_entrada: response.usageMetadata ? response.usageMetadata.promptTokenCount : "No disponible",
         tokens_de_salida: response.usageMetadata ? response.usageMetadata.candidatesTokenCount : "No disponible",
 
-        user: "Desconocido",
-        userdata: "Desconocido",
+        user: user.id ? user.id : "Desconocido",
+        userdata: user ? user : "Desconocido",
 
-        env: "Creacion de curso",
+        env: "Creacion de leccion",
         status: 'success',
 
         url: req.originalUrl,
