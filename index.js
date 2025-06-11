@@ -398,7 +398,7 @@ app.post('/api/gemini/generate', authenticateToken, async (req, res) => {
       jsonData = JSON.parse(textToParse);
       console.log("user:", userData);
 
-      logs.logGeminiAPI({
+      const logData = {
         modelo: modelName,
 
         tokens_de_entrada: tokenUsage ? tokenUsage.promptTokenCount : "No disponible",
@@ -418,7 +418,9 @@ app.post('/api/gemini/generate', authenticateToken, async (req, res) => {
         request_json: req.body,
         headers_recieved: "header de salida",
         response_LLM_json: geminiSdkResponse
-      },token)
+      };
+
+      logs.logGeminiAPI(logData,token)
 
       // console.log('Respuesta de Gemini:', JSON.stringify(geminiSdkResponse, null, 2));
       // logs.logGeneral({
@@ -429,8 +431,10 @@ app.post('/api/gemini/generate', authenticateToken, async (req, res) => {
       return res.json({
         success: true,
         result: resultInfo,
-        data: jsonData
+        data: jsonData,
+        logData: logData
       });
+
     } catch (jsonError) {
       return res.json({
         success: true,
@@ -540,7 +544,7 @@ Usa formato Markdown con encabezados, listas, código y otros elementos de forma
       throw new Error('La API de Gemini no devolvió contenido.');
     }
     const token = 123456
-    logs.logGeminiAPI({
+    const logData = {
         modelo: response.modelVersion,
 
         tokens_de_entrada: response.usageMetadata ? response.usageMetadata.promptTokenCount : "No disponible",
@@ -556,13 +560,14 @@ Usa formato Markdown con encabezados, listas, código y otros elementos de forma
 
         headers_sended: "header de entrada",
 
-
         request_json: req.body,
         headers_recieved: "header de salida",
         response_LLM_json: generatedContent
-    },token)
+    }
 
-    return res.json({ content: generatedContent });
+    logs.logGeminiAPI(logData,token)
+
+    return res.json({ content: generatedContent , logData: logData });
   } catch (error) {
     let errorMessage = 'Error al generar el contenido de la lección.';
     if (error.message) errorMessage += ` Detalles: ${error.message}`;
