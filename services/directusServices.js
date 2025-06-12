@@ -23,7 +23,7 @@ class DirectusServices {
         );
 
         // Crear transacción después de crear el log
-        // await this.createTransaction({
+        // await this.createTransaction({ e
         //   amount: Number(data.tokens_de_entrada) + Number(data.tokens_de_salida), 
         //   reference: data.description,
         //   user: data.user_id || data.user 
