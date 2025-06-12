@@ -410,7 +410,7 @@ app.post('/api/gemini/generate', authenticateToken, async (req, res) => {
         env: "Creacion de leccion",
         status: 'success',
 
-        description: "Creacion de curso",
+        // description: "Creacion de curso",
 
         url: req.originalUrl,
 
@@ -556,7 +556,7 @@ Usa formato Markdown con encabezados, listas, código y otros elementos de forma
         userdata: user ? user : "Desconocido",
         env: "Creacion de leccion",
         status: 'success',
-        description: "Creacion de leccion",
+        // description: "Creacion de leccion",
         url: req.originalUrl,
 
         headers_sended: "header de entrada",
