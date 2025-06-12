@@ -3,9 +3,9 @@ const axios = require('axios');
 class DirectusServices {
   constructor() {
     this.baseURL = process.env.DIRECTUS_URL;
-    this.baseURLUser = process.env.DIRECTUS_USERS_URL;
+    // this.baseURLUser = process.env.DIRECTUS_USERS_URL;
     this.apiToken = process.env.DIRECTUS_LOGSADMIN_TOKEN;
-    this.apiTokenUser = process.env.DIRECTUS_USERADEMIN_TOKEN;
+    // this.apiTokenUser = process.env.DIRECTUS_USERADEMIN_TOKEN;
   }
 
   // Base principal de consulta a directus segun la coleccion
