@@ -23,11 +23,11 @@ class DirectusServices {
         );
 
         // Crear transacción después de crear el log
-        await this.createTransaction({
-          amount: Number(data.tokens_de_entrada) + Number(data.tokens_de_salida), 
-          reference: data.description,
-          user: data.user_id || data.user 
-        });
+        // await this.createTransaction({
+        //   amount: Number(data.tokens_de_entrada) + Number(data.tokens_de_salida), 
+        //   reference: data.description,
+        //   user: data.user_id || data.user 
+        // });
 
         return response.data;
 
@@ -38,24 +38,24 @@ class DirectusServices {
   }
 
   // Crea una transacción en la base de datos 
-  async createTransaction(transactionData) {
-    try {
-      const response = await axios.post(
-        `${this.baseURLUser}/items/transactions`,
-        transactionData,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiTokenUser}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error creando transacción:', error.message);
-      return null;
-    }
-  }
+  // async createTransaction(transactionData) {
+  //   try {
+  //     const response = await axios.post(
+  //       `${this.baseURLUser}/items/transactions`,
+  //       transactionData,
+  //       {
+  //         headers: {
+  //           'Authorization': `Bearer ${this.apiTokenUser}`,
+  //           'Content-Type': 'application/json'
+  //         }
+  //       }
+  //     );
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error('Error creando transacción:', error.message);
+  //     return null;
+  //   }
+  // }
 
   // Log para api gemini
   async logGeminiAPI(data,token) {
