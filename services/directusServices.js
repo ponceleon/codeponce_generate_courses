@@ -3,7 +3,9 @@ const axios = require('axios');
 class DirectusServices {
   constructor() {
     this.baseURL = process.env.DIRECTUS_URL;
+    this.baseURLUser = process.env.DIRECTUS_USERS_URL;
     this.apiToken = process.env.DIRECTUS_LOGSADMIN_TOKEN;
+    this.apiTokenUser = process.env.DIRECTUS_USERADEMIN_TOKEN;
   }
 
   // Base principal de consulta a directus segun la coleccion
@@ -19,10 +21,38 @@ class DirectusServices {
             }
             }
         );
+
+        // Crear transacción después de crear el log
+        await this.createTransaction({
+          amount: Number(data.tokens_de_entrada) + Number(data.tokens_de_salida), 
+          reference: data.description,
+          user: data.user_id || data.user 
+        });
+
         return response.data;
 
     } catch (error) {
       console.error(`Error guardando log en ${collection}:`, error.message);
+      return null;
+    }
+  }
+
+  // Crea una transacción en la base de datos 
+  async createTransaction(transactionData) {
+    try {
+      const response = await axios.post(
+        `${this.baseURLUser}/items/transactions`,
+        transactionData,
+        {
+          headers: {
+            'Authorization': `Bearer ${this.apiTokenUser}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error creando transacción:', error.message);
       return null;
     }
   }
