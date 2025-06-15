@@ -579,3 +579,85 @@ Usa formato Markdown con encabezados, listas, código y otros elementos de forma
     return res.status(500).json({ error: errorMessage });
   }
 });
+
+
+/**
+ * @swagger
+ * /api/gemini/chat:
+ *   post:
+ *     summary: Enviar mensaje al chat
+ *     description: Procesa un mensaje y devuelve la respuesta de Gemini
+ *     tags:
+ *       - Chat
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - message
+ *             properties:
+ *               message:
+ *                 type: string
+ *                 description: Mensaje a procesar
+ *     responses:
+ *       200:
+ *         description: Respuesta exitosa
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 reply:
+ *                   type: string
+ *       400:
+ *         description: Error en los parámetros
+ *       500:
+ *         description: Error del servidor
+ */
+app.post('/api/gemini/chat', authenticateToken, async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({
+        success: false,
+        error: 'Message is required'
+      });
+    }
+
+    const genAI = await initializeGeminiAPI();
+    if (!genAI) {
+      return res.status(500).json({
+        success: false,
+        error: 'Error al inicializar la API de Gemini'
+      });
+    }
+
+    const response = await genAI.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [{
+        parts: [{ text: message }]
+      }]
+    });
+
+    const reply = response.response.text();
+    
+    return res.json({
+      success: true,
+      reply
+    });
+
+  } catch (error) {
+    console.error('Error en la ruta de chat:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to communicate with Model API'
+    });
+  }
+});
