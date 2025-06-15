@@ -1,7 +1,7 @@
 # API Gemini Proxy - Documentación
 
 **Versión:** 1.0.0  
-**Generado automáticamente el:** 2025-05-24T23:02:05.418Z  
+**Generado automáticamente el:** 2025-06-12T19:26:20.437Z  
 **Ambiente:** development
 
 ## Descripción
@@ -168,4 +168,4 @@ Todas las respuestas siguen el formato estándar:
 
 ---
 
-*Documentación generada automáticamente en deployment el 2025-05-24T23:02:05.418Z*
+*Documentación generada automáticamente en deployment el 2025-06-12T19:26:20.437Z*
