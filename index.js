@@ -497,6 +497,68 @@ app.get('/api/health', (req, res) => {
   res.json({ success: true, data: { status: 'online', message: 'API Gemini Proxy funcionando correctamente' }});
 });
 
+app.post('/api/gemini/chat', authenticateToken, async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({
+        success: false,
+        error: 'Message is required'
+      });
+    }
+
+    const genAI = await initializeGeminiAPI();
+    if (!genAI) {
+      return res.status(500).json({
+        success: false,
+        error: 'Error al inicializar la API de Gemini'
+      });
+    }
+
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+    const GEMINI_API_URL = process.env.GEMINI_API_URL;
+
+    const response = await fetch(
+      `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: message,
+                },
+              ],
+            },
+          ],
+        }),
+      }
+    );   
+
+    const data = await response.json();
+ 
+    // Extraer la respuesta correctamente según la documentación oficial
+    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
+    // return new Response(JSON.stringify({ reply }), { status: 200 });
+    return res.json({
+      success: true,
+      reply
+    });
+
+  } catch (error) {
+    console.error('Error en la comunicacion con el LLM: ', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to communicate with Model API'
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Servidor funcionando en el puerto ${PORT}`);
 });
@@ -581,84 +643,3 @@ Usa formato Markdown con encabezados, listas, código y otros elementos de forma
 });
 
 
-/**
- * @swagger
- * /api/gemini/chat:
- *   post:
- *     summary: Enviar mensaje al chat
- *     description: Procesa un mensaje y devuelve la respuesta de Gemini
- *     tags:
- *       - Chat
- *     security:
- *       - BearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - message
- *             properties:
- *               message:
- *                 type: string
- *                 description: Mensaje a procesar
- *     responses:
- *       200:
- *         description: Respuesta exitosa
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 reply:
- *                   type: string
- *       400:
- *         description: Error en los parámetros
- *       500:
- *         description: Error del servidor
- */
-app.post('/api/gemini/chat', authenticateToken, async (req, res) => {
-  try {
-    const { message } = req.body;
-
-    if (!message) {
-      return res.status(400).json({
-        success: false,
-        error: 'Message is required'
-      });
-    }
-
-    const genAI = await initializeGeminiAPI();
-    if (!genAI) {
-      return res.status(500).json({
-        success: false,
-        error: 'Error al inicializar la API de Gemini'
-      });
-    }
-   console.log("respuesta de genAI: ",  genAI)
-   
-    const response = await genAI.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: [{
-        parts: [{ text: message }]
-      }]
-    });
-
-    const reply = response.response.text();
-    console.log("respuesta de gemini: ",  reply)
-    return res.json({
-      success: true,
-      reply
-    });
-
-  } catch (error) {
-    console.error('Error en la comunicacion con el LLM: ', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to communicate with Model API'
-    });
-  }
-});
