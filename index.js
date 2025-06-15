@@ -638,7 +638,8 @@ app.post('/api/gemini/chat', authenticateToken, async (req, res) => {
         error: 'Error al inicializar la API de Gemini'
       });
     }
-
+   console.log("respuesta de genAI: ",  genAI)
+   
     const response = await genAI.models.generateContent({
       model: "gemini-2.0-flash",
       contents: [{
@@ -647,14 +648,14 @@ app.post('/api/gemini/chat', authenticateToken, async (req, res) => {
     });
 
     const reply = response.response.text();
-    
+    console.log("respuesta de gemini: ",  reply)
     return res.json({
       success: true,
       reply
     });
 
   } catch (error) {
-    console.error('Error en la ruta de chat:', error);
+    console.error('Error en la comunicacion con el LLM: ', error);
     return res.status(500).json({
       success: false,
       error: 'Failed to communicate with Model API'
